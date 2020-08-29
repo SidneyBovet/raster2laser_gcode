@@ -356,12 +356,10 @@ class GcodeExport(inkex.Effect):
                 for y in range(h):
                     for x in range(w):
                         if matrice[y][x] <= 1:
-                            matrice_BN[y][x] = 0
-
-                        if matrice[y][x] >= 254:
-                            matrice_BN[y][x] = 255
-
-                        if matrice[y][x] > 1 and matrice[y][x] < 254:
+                            matrice_BN[y][x] = N
+                        elif matrice[y][x] >= 254:
+                            matrice_BN[y][x] = B
+                        else:
                             matrice_BN[y][x] = (matrice[y][x] // self.options.grayscale_resolution) * self.options.grayscale_resolution
         ####Ora matrice_BN contiene l'immagine in Bianco (255) e Nero (0)
 
@@ -402,10 +400,12 @@ class GcodeExport(inkex.Effect):
         file_gcode.write('G90; Use absolute coordinates\n')
         if self.options.laserminsw:
             file_gcode.write(self.options.laseron + ' ; LASER ON\n\n\n')
+        else:
+            file_gcode.write(self.options.laseroff + ' ; LASER OFF\n\n\n')
 
 
         file_gcode.write('G0' +' F' + str(Feed) + '\n')
-        file_gcode.write('G1' +' F' + str(Feed) + ' S' + str(Power) + '\n')
+        file_gcode.write('G1' +' F' + str(Feed) + ' S' + str(Power) + '\n\n')
 
         #Creazione del Gcode
 
