@@ -61,7 +61,7 @@
 
 
 	<!-- Velocità Nero e spostamento -->
-	<param name="feed" type="int" min="1" max="5000" gui-text="Engraving speed mm/s">200</param>
+	<param name="feed" type="int" min="1" max="10000" gui-text="Engraving speed mm/m">200</param>
 	<param name="power" type="int" min="1" max="100" gui-text="Laser power %">80</param>
 
 	<!-- FLIP = coordinate Cartesiane (False) Coordinate "informatiche" (True) -->

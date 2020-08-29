@@ -7,7 +7,7 @@
 - New file names
 - New svg -> png conversion
 - Remove Preview Only
-- Fix Feed rate (per min = *60)
+- Feed rate in mm/min (was mm/s)
 - Add feed rate to travel moves
 - Add power constant laser power (Sx) #TODO: variable power for grayscale *not working
 - Consolidate Feed (=speed Fx) and Speed(=power Sx) to gcode header

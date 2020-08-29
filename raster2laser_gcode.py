@@ -383,7 +383,7 @@ class GcodeExport(inkex.Effect):
             matrice_BN.reverse()
 
         Laser_ON = False
-        Feed = self.options.feed * 60
+        Feed = self.options.feed
         LaserMaxValue = self.options.laser_max_value
         Power = self.options.power * LaserMaxValue/100
         Scala = self.options.resolution
