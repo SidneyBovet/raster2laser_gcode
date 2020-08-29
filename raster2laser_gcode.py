@@ -304,7 +304,7 @@ class GcodeExport(inkex.Effect):
             Step4r = [N, N, N, N, B]
 
             for y in range(h):
-                for x in range(w/5):
+                for x in range(int(w/5)):
                     media = 0
                     for x2 in range(5):
                         media += matrice[y][x*5+x2]
@@ -329,7 +329,7 @@ class GcodeExport(inkex.Effect):
             Step3c = [B, N, N, N, B]
             Step4c = [N, N, N, N, B]
 
-            for y in range(h/5):
+            for y in range(int(h/5)):
                 for x in range(w):
                     media = 0
                     for y2 in range(5):
