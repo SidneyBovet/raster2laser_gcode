@@ -39,6 +39,8 @@ import png
 # ptvsd.enable_attach(address=('localhost', 5678))
 # ptvsd.wait_for_attach()
 
+B = 255 # Full white
+N = 0 # Full black
 
 class GcodeExport(inkex.Effect):
 
@@ -246,8 +248,6 @@ class GcodeExport(inkex.Effect):
 
         ######## GENERO IMMAGINE IN BIANCO E NERO ########
         #Scorro matrice e genero matrice_BN
-        B = 255
-        N = 0
         matrice_BN = [[255 for i in range(w)]for j in range(h)]
         if self.options.conversion_type == 1:
             #B/W fixed threshold
@@ -461,70 +461,36 @@ class GcodeExport(inkex.Effect):
             for y in range(h):
                 if y % 2 == 0:
                     for x in range(w):
-                        if matrice_BN[y][x] != B:
-                            if not Laser_ON:
-                                if self.options.laserminsw:
-                                    file_gcode.write('G0 X' + str(float(x)/Scala) + ' Y' + str(float(y)/Scala) + ' S' + str(LaserMaxValue - matrice_BN[y][x]) +'\n')
-                                else:
-                                    file_gcode.write('G0 X' + str(float(x)/Scala) + ' Y' + str(float(y)/Scala) +'\n')
-                                    file_gcode.write(self.options.laseron + ' '+ ' S' + str(LaserMaxValue - matrice_BN[y][x]) +'\n')
-                                Laser_ON = True
-
-                            if  Laser_ON:   #DEVO evitare di uscire dalla matrice
-                                if x == w-1: #controllo fine riga
-                                    file_gcode.write('G1 X' + str(float(x)/Scala) + ' Y' + str(float(y)/Scala) + '\n')
-                                    if not self.options.laserminsw:
-                                        file_gcode.write(self.options.laseroff + '\n')
-                                    Laser_ON = False
-
-                                else:
-                                    if matrice_BN[y][x+1] == B:
-                                        file_gcode.write('G1 X' + str(float(x+1)/Scala) + ' Y' + str(float(y)/Scala) +'\n')
-                                        if not self.options.laserminsw:
-                                            file_gcode.write(self.options.laseroff + '\n')
-                                        Laser_ON = False
-
-                                    elif matrice_BN[y][x] != matrice_BN[y][x+1]:
-                                        if self.options.laserminsw:
-                                            file_gcode.write('G1 X' + str(float(x+1)/Scala) + ' Y' + str(float(y)/Scala) + ' S' + str(LaserMaxValue - matrice_BN[y][x+1]) +'\n')
-                                        else:
-                                            file_gcode.write('G1 X' + str(float(x+1)/Scala) + ' Y' + str(float(y)/Scala) +'\n')
-                                            file_gcode.write(self.options.laseron + ' '+ ' S' + str(LaserMaxValue - matrice_BN[y][x+1]) +'\n')
-
-
+                        is_end_position = (x == w - 1)
+                        # don't try to grab the next pixel if it doesn't exist (if we're at the end of the line)
+                        next_pixel = matrice_BN[y][x + 1] if not is_end_position else 0
+                        # process this pixel
+                        Laser_ON = self.process_greyscale_pixel(
+                            file_gcode=file_gcode,
+                            current_pixel=matrice_BN[y][x],
+                            next_pixel=next_pixel,
+                            laser_pos_x=float(x) / Scala,
+                            laser_pos_y=float(y) / Scala,
+                            laser_pos_next_x=float(x) / Scala,
+                            is_end_position=is_end_position,
+                            max_power=Power,
+                            laser_on=Laser_ON)
                 else:
                     for x in reversed(range(w)):
-                        if matrice_BN[y][x] != B:
-                            if not Laser_ON:
-                                if self.options.laserminsw:
-                                    file_gcode.write('G0 X' + str(float(x+1)/Scala) + ' Y' + str(float(y)/Scala) + ' S' + str(LaserMaxValue - matrice_BN[y][x]) +'\n')
-                                else:
-                                    file_gcode.write('G0 X' + str(float(x+1)/Scala) + ' Y' + str(float(y)/Scala) +'\n')
-                                    file_gcode.write(self.options.laseron + ' '+ ' S' + str(LaserMaxValue - matrice_BN[y][x]) +'\n')
-                                Laser_ON = True
-
-                            if  Laser_ON:   #DEVO evitare di uscire dalla matrice
-                                if x == 0: #controllo fine riga ritorno
-                                    file_gcode.write('G1 X' + str(float(x)/Scala) + ' Y' + str(float(y)/Scala) + '\n')
-                                    if not self.options.laserminsw:
-                                        file_gcode.write(self.options.laseroff + '\n')
-                                    Laser_ON = False
-
-                                else:
-                                    if matrice_BN[y][x-1] == B:
-                                        file_gcode.write('G1 X' + str(float(x)/Scala) + ' Y' + str(float(y)/Scala) +'\n')
-                                        if not self.options.laserminsw:
-                                            file_gcode.write(self.options.laseroff + '\n')
-                                        Laser_ON = False
-
-                                    elif  matrice_BN[y][x] != matrice_BN[y][x-1]:
-                                        if self.options.laserminsw:
-                                            file_gcode.write('G1 X' + str(float(x)/Scala) + ' Y' + str(float(y)/Scala) + ' S' + str(LaserMaxValue - matrice_BN[y][x-1]) +'\n')
-                                        else:
-                                            file_gcode.write('G1 X' + str(float(x)/Scala) + ' Y' + str(float(y)/Scala) +'\n')
-                                            file_gcode.write(self.options.laseron + ' '+ ' S' + str(LaserMaxValue - matrice_BN[y][x-1]) +'\n')
-
-
+                        is_end_position = (x == 0)
+                        # don't try to grab the next pixel if it doesn't exist (if we're at the end of the line)
+                        next_pixel = matrice_BN[y][x - 1] if not is_end_position else 0
+                        # process this pixel
+                        Laser_ON = self.process_greyscale_pixel(
+                            file_gcode=file_gcode,
+                            current_pixel=matrice_BN[y][x],
+                            next_pixel=next_pixel,
+                            laser_pos_x=float(x) / Scala,
+                            laser_pos_y=float(y) / Scala,
+                            laser_pos_next_x=float(x + 1) / Scala,
+                            is_end_position=is_end_position,
+                            max_power=Power,
+                            laser_on=Laser_ON)
 
         #Configurazioni finali standard Gcode
         file_gcode.write("\n\n\n" + self.options.laseroff + '; LASER OFF\n')
@@ -532,7 +498,47 @@ class GcodeExport(inkex.Effect):
         file_gcode.close() #Chiudo il file
 
 
+    ## Writes to the output file a full line going either left or right
+    ## The parameters given lets control in which direction the lookup and movement goes
+    def process_greyscale_pixel(self, file_gcode, current_pixel, next_pixel, laser_pos_x, laser_pos_y, laser_pos_next_x, is_end_position, max_power, laser_on):
+        # as long as we have white, don't output any command
+        if current_pixel != B:
+            if not laser_on:
+                # we just hit a non-white pixel after a blank line: move to that pixel (and turn laser on)
+                if self.options.laserminsw:
+                    file_gcode.write('G0 X' + str(laser_pos_x) + ' Y' + str(laser_pos_y) + ' S' + self.get_laser_power(current_pixel, max_power) +'\n')
+                else:
+                    file_gcode.write('G0 X' + str(laser_pos_x) + ' Y' + str(laser_pos_y) +'\n')
+                    file_gcode.write(self.options.laseron + ' '+ ' S' + self.get_laser_power(current_pixel, max_power) +'\n')
+                laser_on = True
+            if laser_on:
+                # we are continuing a series of non-white pixels
+                if is_end_position:
+                    # this is the last pixel of the line: move to that pixel (and turn laser off)
+                    file_gcode.write('G1 X' + str(laser_pos_x) + ' Y' + str(laser_pos_y) + '\n')
+                    if not self.options.laserminsw:
+                        file_gcode.write(self.options.laseroff + '\n')
+                    laser_on = False
+                else:
+                    if next_pixel == B:
+                        # this is the end of a series of non-white pixels: move to it (and turn laser off)
+                        file_gcode.write('G1 X' + str(laser_pos_x) + ' Y' + str(laser_pos_y) +'\n')
+                        if not self.options.laserminsw:
+                            file_gcode.write(self.options.laseroff + '\n')
+                        laser_on = False
+                    elif current_pixel != next_pixel:
+                        # we are going to continue that line afterwards with a different power value, set that up
+                        if self.options.laserminsw:
+                            file_gcode.write('G1 X' + str(laser_pos_x) + ' Y' + str(laser_pos_y) + ' S' + self.get_laser_power(next_pixel, max_power) +'\n')
+                        else:
+                            file_gcode.write('G1 X' + str(laser_pos_x) + ' Y' + str(laser_pos_y) +'\n')
+                            file_gcode.write(self.options.laseron + ' ' + ' S' + self.get_laser_power(next_pixel, max_power) + '\n')
+        return laser_on
 
+
+    def get_laser_power(self, pixel_value, laser_power):
+        percent_on = (B - pixel_value) / B
+        return str(percent_on * laser_power)
 
 
 
